@@ -59,6 +59,9 @@ defmodule EdgehogWeb.Schema.AppliancesTypes do
     @desc "The identifier of the appliance model."
     field :handle, non_null(:string)
 
+    @desc "The URL of the related picture."
+    field :picture_url, :string
+
     @desc "The type of hardware that can be plugged into the appliance model."
     field :hardware_type, non_null(:hardware_type)
 
@@ -179,6 +182,9 @@ defmodule EdgehogWeb.Schema.AppliancesTypes do
         """
         field :handle, non_null(:string)
 
+        @desc "The file blob of a related picture."
+        field :picture_file, :upload
+
         @desc "The list of part numbers associated with the appliance model."
         field :part_numbers, non_null(list_of(non_null(:string)))
 
@@ -221,6 +227,9 @@ defmodule EdgehogWeb.Schema.AppliancesTypes do
         lower case ASCII letters, digits and the hyphen - symbol.
         """
         field :handle, :string
+
+        @desc "The file blob of a related picture."
+        field :picture_file, :upload
 
         @desc "The list of part numbers associated with the appliance model."
         field :part_numbers, list_of(non_null(:string))

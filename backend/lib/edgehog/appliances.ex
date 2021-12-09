@@ -30,6 +30,13 @@ defmodule Edgehog.Appliances do
   alias Edgehog.Appliances.ApplianceModelPartNumber
   alias Edgehog.Appliances.HardwareType
   alias Edgehog.Appliances.HardwareTypePartNumber
+  alias Edgehog.Assets.Store
+
+  @assets_store_module Application.compile_env(
+                         :edgehog,
+                         :assets_store_module,
+                         Store
+                       )
 
   @doc """
   Returns the list of hardware_types.
@@ -286,9 +293,29 @@ defmodule Edgehog.Appliances do
     |> Multi.insert(:appliance_model, fn %{assoc_part_numbers: changeset} ->
       changeset
     end)
+    |> Multi.update(:upload_appliance_model_picture, fn %{appliance_model: appliance_model} ->
+      case Map.has_key?(attrs, :picture_file) do
+        true ->
+          Ecto.Changeset.merge(
+            @assets_store_module.cast_asset_deletion(
+              appliance_model,
+              :picture_url
+            ),
+            @assets_store_module.cast_asset_upload(
+              appliance_model,
+              :picture_url,
+              attrs.picture_file
+            )
+          )
+
+        false ->
+          # Return empty changeset
+          Ecto.Changeset.change(appliance_model)
+      end
+    end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{appliance_model: appliance_model}} ->
+      {:ok, %{upload_appliance_model_picture: appliance_model}} ->
         {:ok, Repo.preload(appliance_model, [:part_numbers, :hardware_type])}
 
       {:error, _failed_operation, failed_value, _changes_so_far} ->
@@ -320,9 +347,29 @@ defmodule Edgehog.Appliances do
     |> Multi.update(:appliance_model, fn %{assoc_part_numbers: changeset} ->
       changeset
     end)
+    |> Multi.update(:upload_appliance_model_picture, fn %{appliance_model: appliance_model} ->
+      case Map.has_key?(attrs, :picture_file) do
+        true ->
+          Ecto.Changeset.merge(
+            @assets_store_module.cast_asset_deletion(
+              appliance_model,
+              :picture_url
+            ),
+            @assets_store_module.cast_asset_upload(
+              appliance_model,
+              :picture_url,
+              attrs.picture_file
+            )
+          )
+
+        false ->
+          # Return empty changeset
+          Ecto.Changeset.change(appliance_model)
+      end
+    end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{appliance_model: appliance_model}} ->
+      {:ok, %{upload_appliance_model_picture: appliance_model}} ->
         {:ok, Repo.preload(appliance_model, [:part_numbers, :hardware_type])}
 
       {:error, _failed_operation, failed_value, _changes_so_far} ->

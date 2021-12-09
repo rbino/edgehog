@@ -38,6 +38,10 @@ config :edgehog, :astarte_wifi_scan_result_module, Edgehog.Astarte.Device.WiFiSc
 config :edgehog, :astarte_system_status_module, Edgehog.Astarte.Device.SystemStatusMock
 config :edgehog, :astarte_battery_status_module, Edgehog.Astarte.Device.BatteryStatusMock
 
+# Uploaders mocks for tests
+config :edgehog, :assets_store_module, Edgehog.Assets.StoreMock
+
+# Geolocation mocks for tests
 config :edgehog,
   ip_geolocation_provider: Edgehog.Geolocation.IPGeolocationProviderMock,
   wifi_geolocation_provider: Edgehog.Geolocation.WiFiGeolocationProviderMock,
