@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-defmodule Edgehog.AssetsStoreMockCase do
+defmodule Edgehog.AssetsApplianceModelPictureCase do
   @moduledoc """
   This module defines the setup for tests requiring
   access to the application's data layer.
@@ -37,7 +37,7 @@ defmodule Edgehog.AssetsStoreMockCase do
   using do
     quote do
       import Mox
-      import Edgehog.AssetsStoreMockCase
+      import Edgehog.AssetsApplianceModelPictureCase
     end
   end
 
@@ -46,7 +46,10 @@ defmodule Edgehog.AssetsStoreMockCase do
   setup :verify_on_exit!
 
   setup do
-    Mox.stub_with(Edgehog.Assets.StoreMock, Edgehog.Mocks.Assets.Store)
+    Mox.stub_with(
+      Edgehog.Assets.ApplianceModelPictureMock,
+      Edgehog.Mocks.Assets.ApplianceModelPicture
+    )
 
     :ok
   end

@@ -32,13 +32,15 @@ defmodule Edgehog.Appliances.ApplianceModel do
     has_many :part_numbers, ApplianceModelPartNumber, on_replace: :delete
     has_many :descriptions, ApplianceModelDescription, on_replace: :delete
 
+    field :picture_file, :any, virtual: true
+
     timestamps()
   end
 
   @doc false
   def changeset(appliance_model, attrs) do
     appliance_model
-    |> cast(attrs, [:name, :handle, :picture_url])
+    |> cast(attrs, [:name, :handle, :picture_url, :picture_file])
     |> validate_required([:name, :handle])
     |> validate_format(:handle, ~r/^[a-z][a-z\d\-]*$/,
       message:

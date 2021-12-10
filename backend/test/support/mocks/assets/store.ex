@@ -16,34 +16,27 @@
 # limitations under the License.
 #
 
-alias Ecto.Changeset
-alias Edgehog.Appliances.ApplianceModel
-alias Edgehog.Repo
+defmodule Edgehog.Mocks.Assets.ApplianceModelPicture do
+  alias Edgehog.Appliances.ApplianceModel
+  alias Edgehog.Repo
 
-defmodule Edgehog.Mocks.Assets.Store do
   @behaviour Edgehog.Assets.Store.Behaviour
 
   @bucket_url "https://sample-storage.com/bucket"
 
   @impl true
-  def cast_asset_upload(%ApplianceModel{} = ecto_schema, :picture_url, %Plug.Upload{} = upload) do
-    changeset = Changeset.change(ecto_schema)
+  def upload(%ApplianceModel{} = appliance_model, %Plug.Upload{} = upload) do
     tenant_id = Repo.get_tenant_id()
 
     file_name =
-      "tenants/#{tenant_id}/appliance_models/#{ecto_schema.handle}/picture/#{upload.filename}"
+      "tenants/#{tenant_id}/appliance_models/#{appliance_model.handle}/picture/#{upload.filename}"
 
     file_url = "#{@bucket_url}/#{file_name}"
-    Changeset.put_change(changeset, :picture_url, file_url)
+    {:ok, file_url}
   end
 
   @impl true
-  def cast_asset_upload(ecto_schema, dest_key, nil) do
-    Changeset.change(ecto_schema, %{dest_key => nil})
-  end
-
-  @impl true
-  def cast_asset_deletion(ecto_schema, schema_key) do
-    Changeset.change(ecto_schema, %{schema_key => nil})
+  def delete(%ApplianceModel{} = _appliance_model, _picture_url) do
+    :ok
   end
 end

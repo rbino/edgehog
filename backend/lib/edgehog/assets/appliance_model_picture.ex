@@ -16,11 +16,20 @@
 # limitations under the License.
 #
 
-defmodule Edgehog.Assets.Store.Behaviour do
-  @type upload :: %Plug.Upload{}
+defmodule Edgehog.Assets.ApplianceModelPicture do
+  alias Edgehog.Appliances.ApplianceModel
+  alias Edgehog.Assets.Uploaders.ApplianceModelPicture
 
-  @callback upload(scope :: any, upload()) ::
-              {:ok, file_url :: String.t()} | {:error, reason :: any}
+  @behaviour Edgehog.Assets.Store.Behaviour
 
-  @callback delete(scope :: any, url :: String.t()) :: :ok | {:error, reason :: any}
+  def upload(%ApplianceModel{} = scope, %Plug.Upload{} = upload) do
+    with {:ok, file_name} <- ApplianceModelPicture.store({upload, scope}) do
+      file_url = ApplianceModelPicture.url({file_name, scope})
+      {:ok, file_url}
+    end
+  end
+
+  def delete(%ApplianceModel{} = scope, url) do
+    ApplianceModelPicture.delete({url, scope})
+  end
 end

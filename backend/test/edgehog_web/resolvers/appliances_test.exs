@@ -18,7 +18,7 @@
 
 defmodule EdgehogWeb.Resolvers.AppliancesTest do
   use EdgehogWeb.ConnCase
-  use Edgehog.AssetsStoreMockCase
+  use Edgehog.AssetsApplianceModelPictureCase
 
   alias EdgehogWeb.Resolvers.Appliances
 
@@ -69,7 +69,7 @@ defmodule EdgehogWeb.Resolvers.AppliancesTest do
       assert String.ends_with?(am.picture_url, "foo.jpg")
     end
 
-    test "update_appliance_model/3 removes the picture when picture_file is set to null", %{
+    test "update_appliance_model/3 removes the picture when picture_url is set to null", %{
       context: context
     } do
       hardware_type = hardware_type_fixture()
@@ -79,7 +79,7 @@ defmodule EdgehogWeb.Resolvers.AppliancesTest do
 
       attrs = %{
         appliance_model_id: appliance_model.id,
-        picture_file: nil
+        picture_url: nil
       }
 
       assert {:ok, %{appliance_model: am}} =
@@ -119,8 +119,8 @@ defmodule EdgehogWeb.Resolvers.AppliancesTest do
       }
 
       # Set expection on :store to be called 0 times, will be verified on test exit
-      Edgehog.Assets.StoreMock
-      |> expect(:cast_asset_upload, 0, fn _, _, _ -> throw("Picture stored") end)
+      Edgehog.Assets.ApplianceModelPictureMock
+      |> expect(:upload, 0, fn _, _ -> throw("Picture stored") end)
 
       Appliances.update_appliance_model(%{}, attrs, %{context: context})
     end

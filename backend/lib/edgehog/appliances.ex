@@ -30,13 +30,7 @@ defmodule Edgehog.Appliances do
   alias Edgehog.Appliances.ApplianceModelPartNumber
   alias Edgehog.Appliances.HardwareType
   alias Edgehog.Appliances.HardwareTypePartNumber
-  alias Edgehog.Assets.Store
-
-  @assets_store_module Application.compile_env(
-                         :edgehog,
-                         :assets_store_module,
-                         Store
-                       )
+  alias Edgehog.Assets
 
   @doc """
   Returns the list of hardware_types.
@@ -293,24 +287,18 @@ defmodule Edgehog.Appliances do
     |> Multi.insert(:appliance_model, fn %{assoc_part_numbers: changeset} ->
       changeset
     end)
-    |> Multi.update(:upload_appliance_model_picture, fn %{appliance_model: appliance_model} ->
-      case Map.has_key?(attrs, :picture_file) do
-        true ->
-          Ecto.Changeset.merge(
-            @assets_store_module.cast_asset_deletion(
-              appliance_model,
-              :picture_url
-            ),
-            @assets_store_module.cast_asset_upload(
-              appliance_model,
-              :picture_url,
-              attrs.picture_file
-            )
-          )
-
-        false ->
-          # Return empty changeset
-          Ecto.Changeset.change(appliance_model)
+    |> Multi.run(:upload_appliance_model_picture, fn _repo, %{appliance_model: appliance_model} ->
+      with {:ok, picture_file} <- Ecto.Changeset.fetch_change(changeset, :picture_file),
+           {:ok, picture_url} <-
+             Assets.upload_appliance_model_picture(appliance_model, picture_file) do
+        change_appliance_model(appliance_model, %{picture_url: picture_url})
+        |> Repo.update()
+      else
+        # No :picture_file, no need to change
+        :error -> {:ok, appliance_model}
+        # Storage is disabled, ignore for now
+        {:error, :storage_disabled} -> {:ok, appliance_model}
+        {:error, reason} -> {:error, reason}
       end
     end)
     |> Repo.transaction()
@@ -338,7 +326,23 @@ defmodule Edgehog.Appliances do
   def update_appliance_model(%ApplianceModel{} = appliance_model, attrs) do
     {part_numbers, attrs} = Map.pop(attrs, :part_numbers, [])
 
-    changeset = ApplianceModel.changeset(appliance_model, attrs)
+    changeset =
+      ApplianceModel.changeset(appliance_model, attrs)
+      |> Ecto.Changeset.prepare_changes(fn changeset ->
+        # This handles the case of picture deletion
+        case Ecto.Changeset.fetch_change(changeset, :picture_url) do
+          {:ok, nil} ->
+            old_picture_url = changeset.data.picture_url
+
+            # If picture_url is nil, we do our best to delete the existing picture from the store
+            _ = Assets.delete_appliance_model_picture(appliance_model, old_picture_url)
+
+            changeset
+
+          _ ->
+            changeset
+        end
+      end)
 
     Multi.new()
     |> Multi.run(:assoc_part_numbers, fn _repo, _changes ->
@@ -347,24 +351,25 @@ defmodule Edgehog.Appliances do
     |> Multi.update(:appliance_model, fn %{assoc_part_numbers: changeset} ->
       changeset
     end)
-    |> Multi.update(:upload_appliance_model_picture, fn %{appliance_model: appliance_model} ->
-      case Map.has_key?(attrs, :picture_file) do
-        true ->
-          Ecto.Changeset.merge(
-            @assets_store_module.cast_asset_deletion(
-              appliance_model,
-              :picture_url
-            ),
-            @assets_store_module.cast_asset_upload(
-              appliance_model,
-              :picture_url,
-              attrs.picture_file
-            )
-          )
+    |> Multi.run(:upload_appliance_model_picture, fn _repo, %{appliance_model: appliance_model} ->
+      # This handles the case of picture update
+      with {:ok, picture_file} <- Ecto.Changeset.fetch_change(changeset, :picture_file),
+           {:ok, picture_url} <-
+             Assets.upload_appliance_model_picture(appliance_model, picture_file) do
+        # Retrieve the old picture, if any, from the original changeset
+        old_picture_url = changeset.data.picture_url
+        # Ignore the result here for now: a failure to delete the old picture shouldn't
+        # compromise the success of the operation (we would leave another orphan image anyway)
+        _ = Assets.delete_appliance_model_picture(appliance_model, old_picture_url)
 
-        false ->
-          # Return empty changeset
-          Ecto.Changeset.change(appliance_model)
+        change_appliance_model(appliance_model, %{picture_url: picture_url})
+        |> Repo.update()
+      else
+        # No :picture_file, no need to change
+        :error -> {:ok, appliance_model}
+        # Storage is disabled, ignore for now
+        {:error, :storage_disabled} -> {:ok, appliance_model}
+        {:error, reason} -> {:error, reason}
       end
     end)
     |> Repo.transaction()

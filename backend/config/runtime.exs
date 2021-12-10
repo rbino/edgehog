@@ -140,3 +140,8 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+if config_env() == :test do
+  # Enable s3 storage since we're using mocks for it
+  config :edgehog, enable_s3_storage?: true
+end

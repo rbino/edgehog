@@ -39,7 +39,7 @@ config :edgehog, :astarte_system_status_module, Edgehog.Astarte.Device.SystemSta
 config :edgehog, :astarte_battery_status_module, Edgehog.Astarte.Device.BatteryStatusMock
 
 # Uploaders mocks for tests
-config :edgehog, :assets_store_module, Edgehog.Assets.StoreMock
+config :edgehog, :assets_appliance_model_picture_module, Edgehog.Assets.ApplianceModelPictureMock
 
 # Geolocation mocks for tests
 config :edgehog,
