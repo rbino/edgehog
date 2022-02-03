@@ -43,8 +43,8 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
       }
     }
     """
-    test "returns empty appliance models", %{conn: conn} do
-      conn = get(conn, "/api", query: @query)
+    test "returns empty appliance models", %{conn: conn, api_path: api_path} do
+      conn = get(conn, api_path, query: @query)
 
       assert json_response(conn, 200) == %{
                "data" => %{
@@ -53,7 +53,7 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
              }
     end
 
-    test "returns appliance models if they're present", %{conn: conn} do
+    test "returns appliance models if they're present", %{conn: conn, api_path: api_path} do
       hardware_type = hardware_type_fixture()
 
       %ApplianceModel{
@@ -62,7 +62,7 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
         part_numbers: [%ApplianceModelPartNumber{part_number: part_number}]
       } = appliance_model_fixture(hardware_type)
 
-      conn = get(conn, "/api", query: @query)
+      conn = get(conn, api_path, query: @query)
 
       assert %{
                "data" => %{
@@ -76,7 +76,11 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
       assert appliance_model["hardwareType"]["name"] == hardware_type.name
     end
 
-    test "returns the default locale description", %{conn: conn, tenant: tenant} do
+    test "returns the default locale description", %{
+      conn: conn,
+      api_path: api_path,
+      tenant: tenant
+    } do
       hardware_type = hardware_type_fixture()
 
       default_locale = tenant.default_locale
@@ -88,7 +92,7 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
 
       _appliance_model = appliance_model_fixture(hardware_type, descriptions: descriptions)
 
-      conn = get(conn, "/api", query: @query)
+      conn = get(conn, api_path, query: @query)
 
       assert %{
                "data" => %{
@@ -100,7 +104,11 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
       assert appliance_model["description"]["text"] == "An appliance"
     end
 
-    test "returns an explicit locale description", %{conn: conn, tenant: tenant} do
+    test "returns an explicit locale description", %{
+      conn: conn,
+      api_path: api_path,
+      tenant: tenant
+    } do
       hardware_type = hardware_type_fixture()
 
       default_locale = tenant.default_locale
@@ -115,7 +123,7 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
       conn =
         conn
         |> put_req_header("accept-language", "it-IT")
-        |> get("/api", query: @query)
+        |> get(api_path, query: @query)
 
       assert %{
                "data" => %{
@@ -127,7 +135,11 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
       assert appliance_model["description"]["text"] == "Un dispositivo"
     end
 
-    test "returns empty description for non existing locale", %{conn: conn, tenant: tenant} do
+    test "returns empty description for non existing locale", %{
+      conn: conn,
+      api_path: api_path,
+      tenant: tenant
+    } do
       hardware_type = hardware_type_fixture()
 
       default_locale = tenant.default_locale
@@ -142,7 +154,7 @@ defmodule EdgehogWeb.Schema.Query.ApplianceModelsTest do
       conn =
         conn
         |> put_req_header("accept-language", "fr-FR")
-        |> get("/api", query: @query)
+        |> get(api_path, query: @query)
 
       assert %{
                "data" => %{

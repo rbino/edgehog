@@ -1,7 +1,7 @@
 #
 # This file is part of Edgehog.
 #
-# Copyright 2021 SECO Mind Srl
+# Copyright 2022 SECO Mind Srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,24 +16,19 @@
 # limitations under the License.
 #
 
-defmodule EdgehogWeb.PopulateTenant do
-  @behaviour Plug
+defmodule EdgehogWeb.Auth.Pipeline do
+  use Plug.Builder
 
-  alias Edgehog.Tenants
+  import Plug.Conn
 
-  def init(opts), do: opts
+  require Logger
 
-  def call(conn, _opts) do
-    tenant_slug = conn.path_params["tenant_slug"]
+  plug Guardian.Plug.Pipeline,
+    otp_app: :edgehog,
+    module: EdgehogWeb.Auth.Token,
+    error_handler: EdgehogWeb.Auth.ErrorHandler
 
-    case Tenants.fetch_tenant_by_slug(tenant_slug) do
-      {:ok, tenant} ->
-        _ = Edgehog.Repo.put_tenant_id(tenant.tenant_id)
-        Plug.Conn.assign(conn, :current_tenant, tenant)
-
-      {:error, :not_found} ->
-        # TODO: render a JSON error
-        Plug.Conn.send_resp(conn, :forbidden, "")
-    end
-  end
+  plug EdgehogWeb.Auth.VerifyHeader
+  plug Guardian.Plug.LoadResource
+  plug Guardian.Plug.EnsureAuthenticated
 end
