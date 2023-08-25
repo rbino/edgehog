@@ -270,6 +270,15 @@ defmodule EdgehogWeb.Schema.UpdateCampaignsTypes do
     field :successful_target_count, non_null(:integer)
   end
 
+  @desc """
+  An event sent to the UpdateCampaign subscription
+  """
+  union :update_campaign_event do
+    # This just has a single type for now, but we use a union to leave space
+    # for extension when we introduce new rollout mechanisms
+    types []
+  end
+
   object :update_campaigns_queries do
     @desc "Fetches the list of all update channels."
     field :update_channels, non_null(list_of(non_null(:update_channel))) do
@@ -414,6 +423,28 @@ defmodule EdgehogWeb.Schema.UpdateCampaignsTypes do
         update_channel_id: :update_channel
 
       resolve &Resolvers.UpdateCampaigns.create_update_campaign/2
+    end
+  end
+
+  object :update_campaigns_subscriptions do
+    field :update_campaign, :update_campaign_event do
+      arg :id, non_null(:id)
+
+      config fn args, %{context: %{current_tenant: tenant}} ->
+        # This gets executed in a different process, so we need to set the tenant id
+        Clea.Repo.put_tenant_id(tenant.tenant_id)
+
+        case Absinthe.Relay.Node.from_global_id(args.id, CleaWeb.TenantSchema) do
+          {:error, reason} ->
+            # TODO: is this ok? If so, use with
+            {:error, reason}
+
+          {:ok, %{id: update_campaign_id, type: :update_campaign}} ->
+            {:ok, topic: "update_campaign:#{update_campaign_id}"}
+        end
+      end
+
+      middleware Absinthe.Relay.Node.ParseIDs, id: :update_campaign
     end
   end
 end

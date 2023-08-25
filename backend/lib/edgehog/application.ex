@@ -46,7 +46,9 @@ defmodule Edgehog.Application do
       # Start the UpdateCampaigns supervisor
       Edgehog.UpdateCampaigns.Supervisor,
       # Start the Endpoint (http/https)
-      EdgehogWeb.Endpoint
+      EdgehogWeb.Endpoint,
+      # Start Absinthe Subscriptions
+      {Absinthe.Subscription, EdgehogWeb.Endpoint}
       # Start a worker by calling: Edgehog.Worker.start_link(arg)
       # {Edgehog.Worker, arg}
     ]

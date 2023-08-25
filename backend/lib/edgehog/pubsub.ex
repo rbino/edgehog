@@ -24,21 +24,35 @@ defmodule Edgehog.PubSub do
   """
 
   alias Edgehog.OSManagement.OTAOperation
+  alias Edgehog.OSManagement.Event.OTAOperationCreated
+  alias Edgehog.OSManagement.Event.OTAOperationFinished
+  alias Edgehog.OSManagement.Event.OTAOperationStatusChanged
+  alias Edgehog.OSManagement.Event.OTAOperationStatusProgressUpdated
 
   @type event :: :ota_operation_created | :ota_operation_updated
+
+  @type id :: non_neg_integer() | String.t()
+  @type subject :: :ota_operation
+
+  @doc """
+  Publish an event to the relevant PubSub channels. Raises if any of the publish fails.
+  """
+  @spec publish!(event :: event(), subject :: any) :: :ok
+  def publish!(%OTAOperationCreated{} = event) do
+    Phoenix.PubSub.broadcast!(Edgehog.PubSub, "ota_operations:#{event.id}", event)
+
+    Absinthe.Subscription.publish(EdgehogWeb.Endpoint, event,
+      update_target: "ota_operations:#{event.id}"
+    )
+
+    :ok
+  end
 
   @doc """
   Publish an event to the PubSub. Raises if any of the publish fails.
   """
   @spec publish!(event :: event(), subject :: any) :: :ok | {:error, reason :: any()}
   def publish!(event, subject)
-
-  def publish!(:ota_operation_created = event, %OTAOperation{} = ota_operation) do
-    payload = {event, ota_operation}
-    topics = [wildcard_topic_for_subject(ota_operation)]
-
-    broadcast_many!(topics, payload)
-  end
 
   def publish!(:ota_operation_updated = event, %OTAOperation{} = ota_operation) do
     payload = {event, ota_operation}
@@ -58,19 +72,31 @@ defmodule Edgehog.PubSub do
   end
 
   @doc """
-  Subscribe to events for a specific subject.
+  Subscribe to events for a specific subject on a channel. A channel indicates
+  a specific instance of the subject (e.g. an id for a resource, or a tenant
+  id for a group of resources).
   """
-  def subscribe_to_events_for(subject) do
+  @spec subscribe_to_updates(tenant_id :: id(), subject :: subject(), id :: id())
+  def subscribe_to_updates(tenant_id, subject, id) do
+    topic = update_topic_for_subject(tenant_id, subject, id)
+
+    Phoenix.PubSub.subscribe(Edgehog.PubSub, topic)
+  end
+
+  def subscribe_to_creation(tenant_id, subject) do
+    topic = creation_topic_for_subject(subject)
+
+    Phoenix.PubSub.subscribe(Edgehog.PubSub, topic)
+  end
+
+  def subscribe_to_deletion(tenant_id, subject) do
     topic = topic_for_subject(subject)
 
     Phoenix.PubSub.subscribe(Edgehog.PubSub, topic)
   end
 
-  defp wildcard_topic_for_subject(subject)
   defp wildcard_topic_for_subject(%OTAOperation{}), do: topic_for_subject(:ota_operations)
 
-  defp topic_for_subject(subject)
-  defp topic_for_subject(%OTAOperation{id: id}), do: "ota_operations:#{id}"
-  defp topic_for_subject({:ota_operation, id}), do: "ota_operations:#{id}"
-  defp topic_for_subject(:ota_operations), do: "ota_operations:*"
+  defp topic_for_subject(:ota_operation, id), do: "ota_operation:#{id}"
+  defp topic_for_subject(:ota_operations, tenant_id), do: "ota_operation_by_tenant:#{tenant_id}"
 end

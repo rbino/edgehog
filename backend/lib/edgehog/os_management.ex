@@ -32,6 +32,7 @@ defmodule Edgehog.OSManagement do
   alias Edgehog.Devices
   alias Edgehog.PubSub
   alias Edgehog.OSManagement.EphemeralImage
+  alias Edgehog.OSManagement.Event
   alias Edgehog.OSManagement.OTAOperation
 
   require Logger
@@ -129,7 +130,9 @@ defmodule Edgehog.OSManagement do
       {:ok, %{ota_operation: ota_operation}} ->
         ota_operation = Repo.preload(ota_operation, :device)
 
-        PubSub.publish!(:ota_operation_created, ota_operation)
+        ota_operation
+        |> Event.creation_event()
+        |> PubSub.publish!()
 
         {:ok, ota_operation}
 
@@ -173,7 +176,9 @@ defmodule Edgehog.OSManagement do
       {:ok, %{ota_operation: ota_operation}} ->
         ota_operation = Repo.preload(ota_operation, :device)
 
-        PubSub.publish!(:ota_operation_created, ota_operation)
+        ota_operation
+        |> Event.creation_event()
+        |> PubSub.publish!()
 
         {:ok, ota_operation}
 
@@ -224,7 +229,9 @@ defmodule Edgehog.OSManagement do
 
       ota_operation = Repo.preload(ota_operation, :device)
 
-      PubSub.publish!(:ota_operation_updated, ota_operation)
+      changeset
+      |> Event.events_from_changeset()
+      |> Enum.each(&PubSub.publish!/1)
 
       {:ok, ota_operation}
     end
