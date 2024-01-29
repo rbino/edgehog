@@ -24,5 +24,7 @@ defmodule Edgehog.Devices.Registry do
   entries do
     entry Edgehog.Devices.HardwareType
     entry Edgehog.Devices.HardwareTypePartNumber
+    entry Edgehog.Devices.SystemModel
+    entry Edgehog.Devices.SystemModelPartNumber
   end
 end
