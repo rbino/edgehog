@@ -46,7 +46,10 @@ defmodule Edgehog.Devices.SystemModel do
     end
 
     mutations do
-      create :create_system_model, :create
+      create :create_system_model, :create do
+        relay_id_translations input: [hardware_type_id: :hardware_type]
+      end
+
       update :update_system_model, :update
       destroy :delete_system_model, :destroy
     end
@@ -70,7 +73,6 @@ defmodule Edgehog.Devices.SystemModel do
       argument :hardware_type_id, Edgehog.Types.RelayId do
         description "The ID of the hardware type that can be used by devices of this model"
         allow_nil? false
-        constraints type: :hardware_type
       end
 
       argument :part_numbers, {:array, :string} do
