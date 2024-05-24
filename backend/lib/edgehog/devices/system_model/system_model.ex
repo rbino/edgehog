@@ -88,8 +88,8 @@ defmodule Edgehog.Devices.SystemModel do
         description "A picture representing the system model that will be uploaded to a bucket."
       end
 
-      argument :localized_descriptions, {:array, Localization.LocalizedAttribute} do
-        description "A list of descriptions in different languages."
+      argument :localized_descriptions, :map do
+        description "A map of descriptions in different languages."
       end
 
       validate Validations.EitherPictureUrlOrPictureFile
@@ -214,9 +214,9 @@ defmodule Edgehog.Devices.SystemModel do
   end
 
   calculations do
-    calculate :localized_descriptions, {:array, Localization.LocalizedAttribute} do
+    calculate :localized_descriptions, :map do
       public? true
-      description "A list of descriptions in different languages."
+      description "A map of descriptions in different languages."
       calculation {Localization.Calculations.LocalizedAttribute, attribute: :description}
       argument :preferred_language_tags, {:array, :string}
     end

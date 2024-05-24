@@ -86,10 +86,7 @@ defmodule EdgehogWeb.Schema.Query.SystemModelTest do
       document = """
       query ($id: ID!, $preferredLanguageTags: [String!]) {
         systemModel(id: $id) {
-          localizedDescriptions(preferredLanguageTags: $preferredLanguageTags) {
-            languageTag
-            value
-          }
+          localizedDescriptions(preferredLanguageTags: $preferredLanguageTags)
         }
       }
       """
@@ -108,10 +105,8 @@ defmodule EdgehogWeb.Schema.Query.SystemModelTest do
         )
         |> extract_result!()
 
-      assert length(localized_descriptions) == 3
-      assert %{"languageTag" => "en-US", "value" => "My Model"} in localized_descriptions
-      assert %{"languageTag" => "it", "value" => "Il mio modello"} in localized_descriptions
-      assert %{"languageTag" => "fr", "value" => "Mon modele"} in localized_descriptions
+      assert %{"en-US" => "My Model", "it" => "Il mio modello", "fr" => "Mon modele"} ==
+               localized_descriptions
     end
 
     test "returns filtered localized descriptions with preferredLanguageTags", ctx do
@@ -127,16 +122,14 @@ defmodule EdgehogWeb.Schema.Query.SystemModelTest do
         )
         |> extract_result!()
 
-      assert length(localized_descriptions) == 2
-      assert %{"languageTag" => "it", "value" => "Il mio modello"} in localized_descriptions
-      assert %{"languageTag" => "fr", "value" => "Mon modele"} in localized_descriptions
+      assert %{"it" => "Il mio modello", "fr" => "Mon modele"} == localized_descriptions
     end
 
     test "returns empty localized descriptions if no language tag matches exactly", ctx do
       %{tenant: tenant, id: id, document: document} = ctx
       preferred_language_tags = ["en-GB", "de"]
 
-      %{"localizedDescriptions" => []} =
+      %{"localizedDescriptions" => %{}} =
         system_model_query(
           tenant: tenant,
           id: id,

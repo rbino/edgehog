@@ -51,12 +51,7 @@ defmodule Edgehog.Localization.Calculations.LocalizedAttribute do
 
     Enum.map(records, fn record ->
       attribute_map = Map.fetch!(record, opts[:attribute]) || %{}
-
-      attribute_map
-      |> language_select_fun.()
-      |> Enum.map(fn {language_tag, value} ->
-        %{language_tag: language_tag, value: value}
-      end)
+      language_select_fun.(attribute_map)
     end)
   end
 end

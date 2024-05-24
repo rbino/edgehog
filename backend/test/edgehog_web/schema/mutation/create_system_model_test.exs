@@ -62,10 +62,7 @@ defmodule EdgehogWeb.Schema.Mutation.CreateSystemModelTest do
     end
 
     test "allows passing localized descriptions", %{tenant: tenant} do
-      localized_descriptions = [
-        %{"languageTag" => "en", "value" => "My Model"},
-        %{"languageTag" => "it", "value" => "Il mio modello"}
-      ]
+      localized_descriptions = %{"en" => "My Model", "it" => "Il mio modello"}
 
       result =
         create_system_model_mutation(
@@ -74,9 +71,7 @@ defmodule EdgehogWeb.Schema.Mutation.CreateSystemModelTest do
         )
 
       assert %{"localizedDescriptions" => localized_descriptions} = extract_result!(result)
-      assert length(localized_descriptions) == 2
-      assert %{"languageTag" => "en", "value" => "My Model"} in localized_descriptions
-      assert %{"languageTag" => "it", "value" => "Il mio modello"} in localized_descriptions
+      assert %{"en" => "My Model", "it" => "Il mio modello"} == localized_descriptions
     end
 
     test "allows saving a picture url", %{tenant: tenant} do
@@ -230,10 +225,7 @@ defmodule EdgehogWeb.Schema.Mutation.CreateSystemModelTest do
         result {
           id
           name
-          localizedDescriptions {
-            languageTag
-            value
-          }
+          localizedDescriptions
           handle
           pictureUrl
           partNumbers {
@@ -289,9 +281,6 @@ defmodule EdgehogWeb.Schema.Mutation.CreateSystemModelTest do
   end
 
   defp extract_result!(result) do
-    refute :errors in Map.keys(result)
-    refute "errors" in Map.keys(result[:data])
-
     assert %{
              data: %{
                "createSystemModel" => %{
@@ -299,6 +288,8 @@ defmodule EdgehogWeb.Schema.Mutation.CreateSystemModelTest do
                }
              }
            } = result
+
+    refute :errors in Map.keys(result)
 
     assert system_model != nil
 
