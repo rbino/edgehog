@@ -24,7 +24,7 @@ defmodule Edgehog.Tenants.AstarteConfig do
     data_layer: :embedded
 
   actions do
-    defaults [:read]
+    defaults [:read, :update]
 
     create :create do
       primary? true
