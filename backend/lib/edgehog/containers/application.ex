@@ -54,6 +54,10 @@ defmodule Edgehog.Containers.Application do
     timestamps()
   end
 
+  identities do
+    identity :name, [:name]
+  end
+
   postgres do
     table "container_applications"
   end
